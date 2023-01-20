@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+    <http:listener-config name="covid-papi-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8082" protocol="HTTPS" tlsContext="TLS_Context"/>
+    </http:listener-config>
+    <apikit:config name="covid-papi-config" api="covid-papi.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="covid-papi-main">
+        <http:listener config-ref="covid-papi-httpListenerConfig" path="/v1/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <set-variable value="#[attributes.headers.'x-transaction-id' default uuid()]" doc:name="Set Variable" doc:id="17cd8a40-e574-4888-a222-379f3dbe04d1" variableName="transactionId"/>
+		<logger level="INFO" doc:name="start log" doc:id="86d055a9-54e4-4ec7-bc4b-294e56e03d7c" message="covid papi flow has been started with transactionId -- #[vars.transactionId] and #[payload]"/>
+		<apikit:router config-ref="covid-papi-config" />
+    </flow>
+    <flow name="get:\health-check:covid-papi-config">
+		<flow-ref doc:name="calling health check flow" doc:id="1daa5f9c-28fa-4e70-a733-757c133c1911" name="health-check-flow"/>
+    </flow>
+    <flow name="post:\cases:application\json:covid-papi-config">
+		<flow-ref doc:name="calling register covid case flow" doc:id="4c2ecf1f-9b31-479c-90eb-c47a5e41ece8" name="registerCovidCase" />
+    </flow>
+</mule>

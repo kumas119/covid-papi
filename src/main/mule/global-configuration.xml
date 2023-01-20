@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd">
+	<tls:context name="TLS_Context" doc:name="TLS Context"
+		doc:id="4e21fa5e-ec54-4068-b1dd-4ef2cde960d2">
+		<tls:key-store type="${keystore.Type}"
+			path="${keystore.path}" alias="${keystore.alias}"
+			keyPassword="${keystore.keyPassword}" password="${keystore.password}" />
+	</tls:context>
+	<configuration-properties
+		doc:name="Configuration properties"
+		doc:id="64932f8f-7253-4525-8d15-a038f90768b6" file="dev.yaml" />
+	<configuration doc:name="Configuration" doc:id="2d235fc9-d5fc-4161-9ece-7d6773019244" defaultErrorHandler-ref="global-error-handler" />
+	<http:request-config name="HTTP_Request_uhub_sapi" doc:name="HTTP Request configuration" doc:id="91cf3182-ab06-427e-bc03-277ca422979d" >
+		<http:request-connection protocol="HTTPS" host="uho-dev1-uhub-sapi.us-e2.cloudhub.io" />
+	</http:request-config>
+	<http:request-config name="HTTP_Request_who_sapi" doc:name="HTTP Request configuration" doc:id="18d48dfa-6024-452a-a106-daf56d092b5d" sendCorrelationId="NEVER" >
+		<http:request-connection protocol="HTTPS" host="uho-dev-who-sapi.us-e2.cloudhub.io" />
+	</http:request-config>
+	<api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="be2aaa49-6301-41dc-8b4e-83894896628f" flowRef="covid-papi-main" />
+
+</mule>

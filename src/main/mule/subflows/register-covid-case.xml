@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="registerCovidCase" doc:id="aa136b8d-dfd5-4389-bf09-d06b28244d08" >
+		<logger level="INFO" doc:name="start register covid case flow" doc:id="68cf4336-7e6a-40a1-87ea-eb06d803d8e0" message="Register covid case for covid-papi has been started with payload --- #[payload] and transaction id --- #[vars.transactionId]"/>
+		<set-variable value="#[payload]" doc:name="set input payload as variable" doc:id="ed33a612-b26f-43fd-b22e-748b68ef3ae8" variableName="inputDataCovidPapi"/>
+		<flow-ref doc:name="calling-covid-papi-rest-call-flow" doc:id="8057d874-6352-43ff-931c-c42e9331ccab" name="imp-get-record-by-nationalId"/>
+		<ee:transform doc:name="variable declaration" doc:id="133661d7-7f3a-40c5-9ab5-f0294e8794e5" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	source: payload.source,
+	caseType: payload.caseType,
+	firstName: payload.firstName,
+	lastName: payload.lastName,
+	phone: payload.phone,
+	email: payload.email,
+	dateOfBirth: payload.dateOfBirth,
+	nationalID: payload.nationalID,
+	nationalIDType: payload.nationalIDType,
+	address: {
+		streetAddress: payload.address.streetAddress,
+		city: payload.address.city,
+		state: payload.address.state,
+		postal: payload.address.postal,
+		country: payload.address.country
+	}
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="IsCaseExist" ><![CDATA[%dw 2.0
+output application/json
+---
+if(sizeOf(payload)>0) 'true' else 'false']]></ee:set-variable>
+				<ee:set-variable variableName="statusCheck" ><![CDATA[%dw 2.0
+output application/json
+
+var recentCase= if(sizeOf(payload)>0)(payload orderBy (item) -> item.updateDate)[0] else {}
+var vaccinationDuration = if(sizeOf(payload)>0)(payload orderBy (item) -> item.updateDate)[0] else {}
+
+---
+if((recentCase.caseType=='recovered') or (recentCase.caseType=='invalid') or (recentCase.caseType=='vaccinated') and daysBetween((vaccinationDuration.updateDate as String {format: 'dd-MMM-yy'} as Date {format: 'dd-MMM-yy'}),now() as Date {format: 'dd-MMM-yy'})> 2) 'true' else 'false' ]]></ee:set-variable>
+				<ee:set-variable variableName="getRecordByNationalIdOutput" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="outPutCaseId" ><![CDATA[%dw 2.0
+output application/json
+---
+{caseid: payload.caseID reduce ((item, accumulator) -> item) default {}}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="logging variable details" doc:id="f6dbd6e2-896e-404e-bd68-0feda0a340ba" message="statusCheck variable #[vars.statusCheck] and is Case Exist variable #[vars.isCaseExist] and caseId is #[vars.outPutCaseId]"/>
+		<flow-ref doc:name="calling insert update flow" doc:id="fafd8ddb-e3a7-4cc5-9c4e-114b417a3673" name="insert-update-flow"/>
+		<ee:transform doc:name="Prepare payload for who-sapi" doc:id="999047dc-cd6c-44af-8654-70b1b9778d2c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	        "caseType":vars.inputDataCovidPapi.caseType,
+            "firstName":vars.inputDataCovidPapi.firstName,
+            "lastName":vars.inputDataCovidPapi.lastName,
+            "phone":vars.inputDataCovidPapi.phone,
+            "email":vars.inputDataCovidPapi.email,
+            "dateOfBirth":vars.inputDataCovidPapi.dateOfBirth,
+            "country": vars.inputDataCovidPapi.address.country
+		}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="calling-papi-rest-call-flow" doc:id="c6d0bd2d-ffbe-4edf-9de7-2daeea9f85b7" name="imp-insert-who-sapi-flow"/>
+		<ee:transform doc:name="prepare final response" doc:id="e8cb2541-d139-4992-8234-9033521c8561" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	registrationID:vars.registrationID
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="insert-update-flow" doc:id="af7b0bb4-acfe-4169-ad4c-bcc3da3a490f" >
+		<choice doc:name="Choice" doc:id="146f1e8a-daa4-4bf3-952c-9170d911985e">
+			<when expression='#[vars.isCaseExist=="false" or vars.statusCheck=="true"]'>
+				<ee:transform doc:name="Preparing Payload for inserting to uhub-sapi" doc:id="83cdf28e-bebd-40ac-b3ad-57c311a63eae">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.inputDataCovidPapi]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="calling-post-uhub-sapi-flow" doc:id="7ec1780d-d36d-4de0-945f-dd8f013d5c50" name="imp-post-record-to-uhub-sapi"/>
+				<set-variable value="#[payload.CaseId]" doc:name="Set registration id for insert" doc:id="5d6584d8-3283-4bb5-a484-d65c60114b00" variableName="registrationID"/>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Prepare payload for uhub-sapi record update" doc:id="7c6793cf-fc81-4b8c-990e-b32c874bfea1">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "source": vars.inputDataCovidPapi.source,
+  "caseType": vars.inputDataCovidPapi.caseType,
+  "firstName": vars.inputDataCovidPapi.firstName,
+  "lastName": vars.inputDataCovidPapi.lastName,
+  "phone": vars.inputDataCovidPapi.phone,
+  "email": vars.inputDataCovidPapi.email,
+  "dateOfBirth": vars.inputDataCovidPapi.dateOfBirth,
+  "nationalID": vars.inputDataCovidPapi.nationalID,
+  "nationalIDType": vars.inputDataCovidPapi.nationalIDType,
+  "address": {
+    "streetAddress": vars.inputDataCovidPapi.address.streetAddress,
+    "city": vars.inputDataCovidPapi.address.city,
+    "state": vars.inputDataCovidPapi.address.state,
+    "postal": vars.inputDataCovidPapi.address.postal,
+    "country": vars.inputDataCovidPapi.address.country
+  },
+   "caseID": vars.getRecordByNationalIdOutPut.caseID reduce ((item, accumulator) -> item)
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="calling update uhub sapi" doc:id="d855effc-2e00-455f-aaa8-84dd713011b5" name="imp-update-record-to-uhub-sapi"/>
+				<set-variable value="#[payload.CASE_ID]" doc:name="Set registrationId" doc:id="9245c45f-441a-4a9e-af60-28027b254107" variableName="registrationID"/>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

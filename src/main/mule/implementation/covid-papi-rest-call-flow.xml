@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="imp-get-record-by-nationalId" doc:id="292626c8-a993-4962-9f7d-ac3dc19c288d" >
+		<logger level="INFO" doc:name="start imp-get-record-by-nationalId flow" doc:id="0195af3c-98cb-472f-8d56-12f0b4b9dd56" message="flow get record by national id  has been started with payload -- #[payload] and transactionId -- #[vars.transactionId]" />
+		<http:request method="GET" doc:name="calling uhub-sapi get-record-by-nationalId endpoint" doc:id="a8c8efed-404a-4445-b6f6-d3e6d5652f88" path="/v1/cases/{nationalID}" config-ref="HTTP_Request_uhub_sapi">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	nationalID : payload.'nationalID'
+}]]]></http:uri-params>
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	client_secret : '3097r02',
+	client_id : '307017'
+}]]]></http:query-params>
+			<http:response-validator >
+				<http:success-status-code-validator values="200,404" />
+			</http:response-validator>
+		</http:request>
+		<logger level="INFO" doc:name="end imp-get-record-by-nationalId log" doc:id="82887d1f-6501-4b5d-8223-f375b63ad3e2" message="imp-get-record-by-nationalId has been completed with #[payload] and transactionId -- #[vars.transactionId]" />
+	</flow>
+	<flow name="imp-post-record-to-uhub-sapi" doc:id="199025ac-505a-4695-ac8b-517ff5ae7071" >
+		<logger level="INFO" doc:name="start imp-post-record-to-uhub-sapi" doc:id="cbad2769-6ae8-4439-8bfb-21f7f3a3e7e5" message="flow post record to uhub sapi  has been started with payload -- #[payload] and transactionId -- #[vars.transactionId]"/>
+		<http:request method="POST" doc:name="calling post uhub-sapi " doc:id="519fc1f2-183e-43c7-bc48-bbdc090cf400" config-ref="HTTP_Request_uhub_sapi" path="/v1/cases" >
+			<http:query-params ><![CDATA[#[output application/json
+---
+{
+	"client_id" : "ieuqur0",
+	"client_secret": "ie7809herj"
+}]]]></http:query-params>
+		</http:request>
+		<logger level="INFO" doc:name="end imp-post-record-to-uhub-sapi" doc:id="747d89fc-acf2-41e8-84a5-0974655ea027" message="#[payload]"/>
+	</flow>
+	<flow name="imp-update-record-to-uhub-sapi" doc:id="31450f79-1cd6-4f75-8675-9c37f7635c5e" >
+		<logger level="INFO" doc:name="start imp-update-record-to-uhub-sapi" doc:id="191f06aa-deec-4eb6-ab0e-11f7d859e0bb" message="flow post record to uhub sapi  has been started with payload -- #[payload] and transactionId -- #[vars.transactionId]" />
+		<http:request method="PUT" doc:name="calling put uhub-sapi " doc:id="10e49f50-ac64-44da-a50b-9a9992fe0356" config-ref="HTTP_Request_uhub_sapi" path="/v1/cases" >
+			<http:query-params ><![CDATA[#[output application/json
+---
+{
+	"client_id" : "ieuqur0",
+	"client_secret": "ie7809herj"
+}]]]></http:query-params>
+		</http:request>
+		<logger level="INFO" doc:name="end imp-post-record-to-uhub-sapi" doc:id="7729bfef-47b4-4e34-ab1d-38471d064753" message="#[payload]" />
+	</flow>
+	<flow name="imp-insert-who-sapi-flow" doc:id="9e215cdf-48c4-41cf-905d-462ed43e671e" >
+		<logger level="INFO" doc:name="start imp-update-record-to-uhub-sapi" doc:id="dc493e37-29aa-4dc6-8eaf-62695360b786" message="flow post record to uhub sapi  has been started with payload -- #[payload] and transactionId -- #[vars.transactionId]" />
+		<http:request method="POST" doc:name="calling who-sapi insert api" doc:id="856d510a-7882-45ce-880f-e816df8cce58" config-ref="HTTP_Request_who_sapi" path="/v1/case" sendCorrelationId="NEVER">
+			<http:query-params ><![CDATA[#[{
+	client_id: "uw0quqe",
+	client_secret: "pou30op"
+}]]]></http:query-params>
+		</http:request>
+		<logger level="INFO" doc:name="end imp-post-record-to-uhub-sapi" doc:id="07bfc250-8551-4dd2-98e5-ad5e7f9655cd" message="#[payload]" />
+	</flow>
+</mule>

@@ -1,0 +1,50 @@
+#%RAML 1.0
+title: covid-papi
+version: v1
+baseUri: https://{environment}/covidPapi
+baseUriParameters:
+  environment:
+    description: DEV,TEST,UAT,PROD
+    enum: ["uho-dev-covid-papi.us-e2.cloudhub.io","uho-test-covid-papi.us-e2.cloudhub.io", "uho-uat-covid-papi.us-e2.cloudhub.io", "uho-prod-covid-papi.us-e2.cloudhub.io"]
+traits:
+  clientIdEnforcement: !include /reusableComponents/v1/traits/clientIdEnforcement.raml
+  xTransactionId: !include /reusableComponents/v1/traits/xTransactionID.raml
+uses:
+  dummyAPIHealthCheck: /reusableComponents/v1/resourceType/HealthCheckResourceType.raml
+  commonDataType: /reusableComponents/v1/commonDataTypeLibrary/commonDataTypelibrary.raml
+/cases:
+  post:
+    is: [clientIdEnforcement,xTransactionId]
+    body:
+      application/json:
+        type: commonDataType.postDataExample
+        example:
+            !include /reusableComponents/v1/commonExample/postDataInputBody.json
+    responses:
+      201:
+        body:
+          application/json:
+            example:
+              !include /reusableComponents/v1/commonExample/201ResponseBody.json
+      503:
+        body:
+          application/json:
+            example:
+              !include /reusableComponents/v1/commonExample/503errorResponse.json
+      400:
+        body:
+          application/json:
+            example:
+              !include /reusableComponents/v1/commonExample/400ErrorResponse.json
+      500:
+        body:
+          application/json:
+            example:
+              !include /reusableComponents/v1/commonExample/500ErrorResponse.json
+/health-check:
+  get:
+  type:
+    dummyAPIHealthCheck.all:
+      getResponseType: string
+          
+          

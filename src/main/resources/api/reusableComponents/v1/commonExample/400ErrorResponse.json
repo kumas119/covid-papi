@@ -1,0 +1,5 @@
+{
+                "errorCode": "400",
+                "errorType": "Bad request",
+                "errorMessage": "Invalid JSON payload request"
+              }

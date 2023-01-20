@@ -1,0 +1,54 @@
+#%RAML 1.0 Library
+usage: This contains all common data types.
+types:
+  postDataExample:
+    type: object
+    properties:
+          "source":
+            type: string
+            required: true
+          "caseType":
+            type: string
+            required: true
+          "firstName":
+            type: string
+            required: true
+          "lastName":
+            type: string
+            required: true
+          "phone":
+            type: string
+            required: true
+          "email":
+            type: string
+            required: false
+          "dateOfBirth":
+            type: string
+            required: true
+          "nationalID":
+            type: string
+            required: true
+          "nationalIDType":
+            type: string
+            required: true
+          "address":
+            type: object
+            properties:
+              "streetAddress":
+                type: string
+                required: true
+              "city":
+                type: string
+                required: true
+              "state":
+                type: string
+                required: true
+              "postal":
+                type: string
+                required: true
+              "country":
+                type: string
+                required: true
+          iDoc:
+            type: string
+            required: true

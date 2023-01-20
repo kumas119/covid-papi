@@ -1,0 +1,5 @@
+{
+                "errorCode": "503",
+                "errorType": "The (upstream) service is temporarily not available",
+                "errorMessage": "System connectivity failure (Database is down)"
+              }

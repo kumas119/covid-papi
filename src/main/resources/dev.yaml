@@ -1,0 +1,13 @@
+http:
+  port: "8082"
+keystore:
+  Type: PKCS12
+  path: certs/server-keystore.p12
+  alias: mule-server
+  keyPassword: mulesoft
+  password: mulesoft
+db:
+  host: localhost
+  port: "1521"
+  user: SYSTEM
+  password: Tiger
